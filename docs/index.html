@@ -232,6 +232,34 @@
             font-size: 1rem;
         }
 
+        .countdown {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--primary);
+            margin-top: 0.5rem;
+            padding: 0.4rem 0.75rem;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 0.375rem;
+            font-weight: 500;
+        }
+
+        .countdown.live {
+            color: rgb(34, 197, 94);
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .race-card.disabled .countdown {
+            color: var(--muted-foreground);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .countdown-icon {
+            font-size: 0.9rem;
+        }
+
         footer {
             text-align: center;
             margin-top: 4rem;
@@ -328,9 +356,13 @@
                     Last Nordic Skier Standing
                 </h2>
                 <span class="race-type">Last Athlete Standing</span>
-                <div class="race-date">
+                <div class="race-date" data-event-date="2026-01-30T10:00:00-05:00">
                     <span class="race-date-icon">📅</span>
-                    <span>February 6, 2026 • 10:00 AM EST</span>
+                    <span>January 30, 2026 • 10:00 AM EST</span>
+                </div>
+                <div class="countdown">
+                    <span class="countdown-icon">⏱️</span>
+                    <span class="countdown-text">Calculating...</span>
                 </div>
                 <p class="race-description">
                     10km nordic skiing loop every hour on the hour. Winter endurance at its finest.
@@ -353,9 +385,13 @@
                     Last Skier Standing 2026
                 </h2>
                 <span class="race-type">Last Athlete Standing</span>
-                <div class="race-date">
+                <div class="race-date" data-event-date="2026-02-06T10:00:00-05:00">
                     <span class="race-date-icon">📅</span>
                     <span>February 6, 2026 • 10:00 AM EST</span>
+                </div>
+                <div class="countdown">
+                    <span class="countdown-icon">⏱️</span>
+                    <span class="countdown-text">Calculating...</span>
                 </div>
                 <p class="race-description">
                     Skin up, ski down - do again every hour on the hour until there is only one person.
@@ -371,9 +407,13 @@
                     Whites 100 2026
                 </h2>
                 <span class="race-type">"fat ass"-style event</span>
-                <div class="race-date">
+                <div class="race-date" data-event-date="2026-09-11T06:00:00-05:00">
                     <span class="race-date-icon">📅</span>
                     <span>September 11, 2026 • 6:00 AM EST</span>
+                </div>
+                <div class="countdown">
+                    <span class="countdown-icon">⏱️</span>
+                    <span class="countdown-text">Calculating...</span>
                 </div>
                 <p class="race-description">
                     This is an event where trail runners can receive the logistical help to accomplish this massive route by way of access to five aid stations and transportation.
@@ -391,5 +431,53 @@
             </p>
         </footer>
     </div>
+
+    <script>
+        function updateCountdowns() {
+            const now = new Date();
+            const countdownElements = document.querySelectorAll('.countdown');
+
+            countdownElements.forEach(countdown => {
+                const dateElement = countdown.previousElementSibling;
+                const eventDateStr = dateElement.getAttribute('data-event-date');
+
+                if (!eventDateStr) return;
+
+                const eventDate = new Date(eventDateStr);
+                const diff = eventDate - now;
+
+                const countdownText = countdown.querySelector('.countdown-text');
+
+                if (diff < 0) {
+                    countdown.classList.add('live');
+                    countdownText.textContent = 'Event in progress';
+                    return;
+                } else {
+                    countdown.classList.remove('live');
+                }
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+                let text = 'Starts in: ';
+                if (days > 0) {
+                    text += `${days}d ${hours}h ${minutes}m`;
+                } else if (hours > 0) {
+                    text += `${hours}h ${minutes}m`;
+                } else {
+                    text += `${minutes}m`;
+                }
+
+                countdownText.textContent = text;
+            });
+        }
+
+        // Update immediately on load
+        updateCountdowns();
+
+        // Update every minute
+        setInterval(updateCountdowns, 60000);
+    </script>
 </body>
 </html>
