@@ -251,6 +251,12 @@
             border: 1px solid rgba(34, 197, 94, 0.3);
         }
 
+        .countdown.finished {
+            color: rgb(168, 85, 247);
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
         .race-card.disabled .countdown {
             color: var(--muted-foreground);
             background: rgba(0, 0, 0, 0.2);
@@ -356,12 +362,12 @@
                     Last Nordic Skier Standing
                 </h2>
                 <span class="race-type">Last Athlete Standing</span>
-                <div class="race-date" data-event-date="2026-01-30T10:00:00-05:00">
+                <div class="race-date" data-event-date="2026-01-30T10:00:00-05:00" data-event-end-date="2026-02-02T18:00:00-05:00">
                     <span class="race-date-icon">📅</span>
                     <span>January 30, 2026 • 10:00 AM EST</span>
                 </div>
                 <div class="countdown">
-                    <span class="countdown-icon">⏱️</span>
+                    <span class="countdown-icon"></span>
                     <span class="countdown-text">Calculating...</span>
                 </div>
                 <p class="race-description">
@@ -385,12 +391,12 @@
                     Last Skier Standing 2026
                 </h2>
                 <span class="race-type">Last Athlete Standing</span>
-                <div class="race-date" data-event-date="2026-02-06T10:00:00-05:00">
+                <div class="race-date" data-event-date="2026-02-06T10:00:00-05:00" data-event-end-date="2026-02-07T18:00:00-05:00">
                     <span class="race-date-icon">📅</span>
                     <span>February 6, 2026 • 10:00 AM EST</span>
                 </div>
                 <div class="countdown">
-                    <span class="countdown-icon">⏱️</span>
+                    <span class="countdown-icon"></span>
                     <span class="countdown-text">Calculating...</span>
                 </div>
                 <p class="race-description">
@@ -407,12 +413,12 @@
                     Whites 100 2026
                 </h2>
                 <span class="race-type">"fat ass"-style event</span>
-                <div class="race-date" data-event-date="2026-09-11T06:00:00-05:00">
+                <div class="race-date" data-event-date="2026-09-11T06:00:00-05:00" data-event-end-date="2026-09-12T18:00:00-05:00">
                     <span class="race-date-icon">📅</span>
                     <span>September 11, 2026 • 6:00 AM EST</span>
                 </div>
                 <div class="countdown">
-                    <span class="countdown-icon">⏱️</span>
+                    <span class="countdown-icon"></span>
                     <span class="countdown-text">Calculating...</span>
                 </div>
                 <p class="race-description">
@@ -440,6 +446,7 @@
             countdownElements.forEach(countdown => {
                 const dateElement = countdown.previousElementSibling;
                 const eventDateStr = dateElement.getAttribute('data-event-date');
+                const eventEndDateStr = dateElement.getAttribute('data-event-end-date');
 
                 if (!eventDateStr) return;
 
@@ -448,12 +455,25 @@
 
                 const countdownText = countdown.querySelector('.countdown-text');
 
+                // Check if event has ended
+                if (eventEndDateStr) {
+                    const eventEndDate = new Date(eventEndDateStr);
+                    if (now > eventEndDate) {
+                        countdown.classList.remove('live');
+                        countdown.classList.add('finished');
+                        countdownText.textContent = 'Event finished';
+                        return;
+                    }
+                }
+
+                // Check if event is in progress
                 if (diff < 0) {
                     countdown.classList.add('live');
+                    countdown.classList.remove('finished');
                     countdownText.textContent = 'Event in progress';
                     return;
                 } else {
-                    countdown.classList.remove('live');
+                    countdown.classList.remove('live', 'finished');
                 }
 
                 const days = Math.floor(diff / (1000 * 60 * 60 * 24));
