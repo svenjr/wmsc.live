@@ -37,13 +37,13 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto;
         }
 
         header {
             text-align: center;
-            margin-bottom: 4rem;
+            margin-bottom: 3rem;
         }
 
         h1 {
@@ -77,10 +77,110 @@
         }
 
         .race-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: 1.5rem;
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--muted-foreground);
+            margin-bottom: 1rem;
+            margin-top: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .section-header:first-of-type {
+            margin-top: 0;
+        }
+
+        .past-events {
+            margin-bottom: 1.5rem;
+        }
+
+        .past-events .race-grid {
+            gap: 0.75rem;
+        }
+
+        .race-card.compact {
+            padding: 1rem 1.5rem;
+            opacity: 0.6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+        }
+
+        .race-card.compact:hover {
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+
+        .race-card.compact .card-left {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .race-card.compact .card-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .race-card.compact .race-icon {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .race-card.compact .race-title {
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .race-card.compact .race-type {
+            display: none;
+        }
+
+        .race-card.compact .race-description {
+            display: none;
+        }
+
+        .race-card.compact .race-date {
+            margin: 0;
+            font-size: 0.8rem;
+            padding: 0.35rem 0.75rem;
+            background: transparent;
+            border-left: none;
+            white-space: nowrap;
+        }
+
+        .race-card.compact .race-date-icon {
+            display: none;
+        }
+
+        .race-card.compact .countdown {
+            margin: 0;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .race-card.compact .race-actions {
+            flex-direction: row;
+            gap: 0.5rem;
+            margin: 0;
+        }
+
+        .race-card.compact .event-link,
+        .race-card.compact .race-link {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.85rem;
+            white-space: nowrap;
         }
 
         .race-card {
@@ -315,7 +415,7 @@
             }
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
             body {
                 padding: 1.5rem 1rem;
             }
@@ -324,13 +424,34 @@
                 margin-bottom: 2.5rem;
             }
 
-            .race-grid {
-                grid-template-columns: 1fr;
+            .race-card {
+                padding: 1.5rem;
+            }
+
+            .race-card.compact {
+                flex-direction: column;
+                align-items: flex-start;
                 gap: 1rem;
             }
 
-            .race-card {
-                padding: 1.5rem;
+            .race-card.compact .card-left {
+                width: 100%;
+            }
+
+            .race-card.compact .card-right {
+                width: 100%;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .race-card.compact .race-actions {
+                width: 100%;
+            }
+
+            .race-card.compact .event-link,
+            .race-card.compact .race-link {
+                flex: 1;
+                justify-content: center;
             }
         }
 
@@ -354,66 +475,66 @@
             <p class="tagline">Live Event Tracking & Results</p>
         </header>
 
+        <!-- Past Events -->
+        <div class="past-events">
+            <h2 class="section-header">Past Events</h2>
+            <div class="race-grid">
+                <!-- Last Nordic Skier -->
+                <div class="race-card glass compact" onclick="window.open('https://last-nordic-844554391499.us-central1.run.app', '_blank')">
+                    <div class="card-left">
+                        <span class="race-icon">⛷️</span>
+                        <h2 class="race-title">Last Nordic Skier Standing 2026</h2>
+                    </div>
+                    <div class="card-right">
+                        <div class="race-date" data-event-date="2026-01-30T10:00:00-05:00" data-event-end-date="2026-01-31T10:00:00-05:00">
+                            <span class="race-date-icon">📅</span>
+                            <span>Jan 30-31, 2026</span>
+                        </div>
+                        <div class="countdown finished">
+                            <span class="countdown-icon">✓</span>
+                            <span class="countdown-text">Finished</span>
+                        </div>
+                        <div class="race-actions">
+                            <a href="https://last-nordic-844554391499.us-central1.run.app" class="event-link" target="_blank" onclick="event.stopPropagation()">
+                                View Results
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-header">Upcoming Events</h2>
         <div class="race-grid">
-            <!-- Last Nordic Skier -->
-            <div class="race-card glass" onclick="window.open('https://last-nordic-844554391499.us-central1.run.app', '_blank')">
-                <span class="race-icon">⛷️</span>
-                <h2 class="race-title">
-                    Last Nordic Skier Standing 2026
-                </h2>
-                <span class="race-type">Last Athlete Standing</span>
-                <div class="race-date" data-event-date="2026-01-30T10:00:00-05:00" data-event-end-date="2026-01-31T10:00:00-05:00">
-                    <span class="race-date-icon">📅</span>
-                    <span>January 30, 2026 • 10:00 AM EST</span>
-                </div>
-                <div class="countdown">
-                    <span class="countdown-icon"></span>
-                    <span class="countdown-text">Calculating...</span>
-                </div>
-                <p class="race-description">
-                    10km nordic skiing loop every hour on the hour. Winter endurance at its finest.
-                </p>
-                <div class="race-actions">
-                    <a href="https://last-nordic-844554391499.us-central1.run.app" class="race-link" target="_blank" onclick="event.stopPropagation()">
-                        View Live Tracking
-                    </a>
-                    <a href="" class="event-link" onclick="window.open('https://whitemountainski.co/pages/last-noric-skier-standing', '_blank')">
-                        Event Info
-                    </a>
-                </div>
+          <div class="race-card glass" onclick="window.open('https://last-skier-m2cqn7zweq-uc.a.run.app/', '_blank')">
+            <span class="race-icon">⛷️</span>
+            <h2 class="race-title">
+              Last Skier Standing 2026
+            </h2>
+            <span class="race-type">Last Athlete Standing</span>
+            <div class="race-date" data-event-date="2026-02-06T10:00:00-05:00" data-event-end-date="2026-02-09T18:00:00-05:00">
+              <span class="race-date-icon">📅</span>
+              <span>February 6, 2026 • 10:00 AM EST</span>
             </div>
-
-            <!-- UPCOMING EVENTS -->
-
-            <div class="race-card glass disabled">
-                <span class="race-icon">⛷️</span>
-                <h2 class="race-title">
-                    Last Skier Standing 2026
-                </h2>
-                <span class="race-type">Last Athlete Standing</span>
-                <div class="race-date" data-event-date="2026-02-06T10:00:00-05:00" data-event-end-date="2026-02-07T18:00:00-05:00">
-                    <span class="race-date-icon">📅</span>
-                    <span>February 6, 2026 • 10:00 AM EST</span>
-                </div>
-                <div class="countdown">
-                    <span class="countdown-icon"></span>
-                    <span class="countdown-text">Calculating...</span>
-                </div>
-                <p class="race-description">
-                    Skin up, ski down - do it again every hour on the hour until there is only one person left.
-                </p>
-                <a href="" class="event-link" onclick="window.open('https://whitemountainski.co/pages/last-skier-standing', '_blank')">
-                    Event Info
-                </a>
+            <div class="countdown">
+              <span class="countdown-icon"></span>
+              <span class="countdown-text">Calculating...</span>
             </div>
+            <p class="race-description">
+              Skin up, ski down - do it again every hour on the hour until there is only one person left.
+            </p>
+            <a href="" class="event-link" onclick="window.open('https://whitemountainski.co/pages/last-skier-standing', '_blank')">
+              Event Info
+            </a>
+          </div>
 
-            <div class="race-card glass disabled">
-                <span class="race-icon">🏔</span>
-                <h2 class="race-title">
-                    Whites 100 2026
-                </h2>
-                <span class="race-type">"fat ass"-style event</span>
-                <div class="race-date" data-event-date="2026-09-11T06:00:00-05:00" data-event-end-date="2026-09-12T18:00:00-05:00">
+          <div class="race-card glass disabled">
+            <span class="race-icon">🏔</span>
+            <h2 class="race-title">
+              Whites 100 2026
+            </h2>
+            <span class="race-type">"fat ass"-style event</span>
+            <div class="race-date" data-event-date="2026-09-11T06:00:00-05:00" data-event-end-date="2026-09-12T18:00:00-05:00">
                     <span class="race-date-icon">📅</span>
                     <span>September 11, 2026 • 6:00 AM EST</span>
                 </div>
