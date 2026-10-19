@@ -5,622 +5,1010 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WMSC Live - Event Tracking & Results</title>
     <meta name="description" content="Live event tracking and results for WMSC ultramarathon events">
+    <meta name="theme-color" content="#020817">
     <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        * {
+        /* Tokens mirror the tracker app (race-tracker/frontend/src/styles/globals.css)
+           and race-tracker-website, so this page looks like the tracker it links to. Dark only. */
+        :root {
+            --background: hsl(222 84% 5%);
+            --foreground: hsl(210 40% 98%);
+            --card: hsl(223 47% 11%);
+            --primary: hsl(217 91% 60%);
+            --primary-foreground: hsl(222 84% 5%);
+            --secondary: hsl(220 17% 17%);
+            --muted: hsl(220 17% 17%);
+            --muted-foreground: hsl(215 20% 65%);
+            --border: hsl(220 17% 17%);
+            --radius: 0.75rem;
+            --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+            --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        *, ::before, ::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            border-color: var(--border);
         }
 
-        :root {
-            /* Dark theme - matching race tracker */
-            --background: hsl(222, 84%, 5%);
-            --foreground: hsl(210, 40%, 98%);
-            --card: hsl(223, 47%, 11%);
-            --card-foreground: hsl(210, 40%, 98%);
-            --primary: hsl(217, 91%, 60%);
-            --primary-foreground: hsl(222, 84%, 5%);
-            --muted: hsl(220, 17%, 17%);
-            --muted-foreground: hsl(215, 20%, 65%);
-            --border: hsl(220, 17%, 17%);
-            --radius: 0.75rem;
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-sans);
+            font-feature-settings: "rlig" 1, "calt" 1;
+            -webkit-font-smoothing: antialiased;
             background: var(--background);
             color: var(--foreground);
             line-height: 1.6;
             min-height: 100vh;
-            padding: 2rem 1rem;
+            overflow-x: hidden;
+        }
+
+        ::selection {
+            background: hsl(217 91% 60% / 0.35);
+        }
+
+        svg.icon {
+            width: 1em;
+            height: 1em;
+            flex-shrink: 0;
         }
 
         .container {
-            max-width: 900px;
+            position: relative;
+            max-width: 56rem;
             margin: 0 auto;
+            padding: 0 1rem;
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 3rem;
+        @media (min-width: 640px) {
+            .container { padding: 0 1.5rem; }
         }
 
-        h1 {
-            font-size: clamp(2.5rem, 8vw, 5rem);
-            font-weight: 700;
-            margin-bottom: 1rem;
-            background: linear-gradient(135deg, var(--primary) 0%, hsl(217, 100%, 70%) 50%, hsl(200, 100%, 80%) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .subtitle {
-            font-size: clamp(1rem, 3vw, 1.25rem);
-            color: var(--muted-foreground);
-            margin-bottom: 0.5rem;
-        }
-
-        .tagline {
-            font-size: clamp(0.875rem, 2vw, 1rem);
-            color: var(--muted-foreground);
-            opacity: 0.8;
-        }
+        /* ---------- Shared surfaces ---------- */
 
         .glass {
-            backdrop-filter: blur(40px);
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid rgba(71, 85, 105, 0.5);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            background: hsl(223 47% 11% / 0.8);
+            border: 1px solid hsl(220 17% 17% / 0.5);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            border-radius: var(--radius);
         }
 
-        .race-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .section-header {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--muted-foreground);
-            margin-bottom: 1rem;
-            margin-top: 2.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        .section-header:first-of-type {
-            margin-top: 0;
-        }
-
-        .past-events {
-            margin-bottom: 1.5rem;
-        }
-
-        .past-events .race-grid {
-            gap: 0.75rem;
-        }
-
-        .race-card.compact {
-            padding: 1rem 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1.5rem;
-        }
-
-        .race-card.compact:hover {
-            transform: translateY(-1px);
-        }
-
-        .race-card.compact .card-left {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .race-card.compact .card-right {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .race-card.compact .race-icon {
-            font-size: 1.5rem;
-            margin: 0;
-        }
-
-        .race-card.compact .race-title {
-            font-size: 1rem;
-            margin: 0;
-        }
-
-        .race-card.compact .race-type {
-            display: none;
-        }
-
-        .race-card.compact .race-description {
-            display: none;
-        }
-
-        .race-card.compact .race-date {
-            margin: 0;
-            font-size: 0.8rem;
-            padding: 0.35rem 0.75rem;
-            background: transparent;
-            border-left: none;
-            white-space: nowrap;
-        }
-
-        .race-card.compact .race-date-icon {
-            display: none;
-        }
-
-        .race-card.compact .countdown {
-            margin: 0;
-            padding: 0.35rem 0.75rem;
-            font-size: 0.75rem;
-            white-space: nowrap;
-        }
-
-        .race-card.compact .race-actions {
-            flex-direction: row;
-            gap: 0.5rem;
-            margin: 0;
-        }
-
-        .race-card.compact .event-link,
-        .race-card.compact .race-link {
-            font-size: 0.8rem;
-            padding: 0.4rem 0.85rem;
-            white-space: nowrap;
-        }
-
-        .race-card {
-            padding: 2rem;
-            transition: all 0.3s ease;
-            cursor: pointer;
+        .gradient-border {
             position: relative;
-            overflow: hidden;
         }
 
-        .race-card:not(.disabled):hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-            border-color: var(--primary);
-        }
-
-        .race-card.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .race-card::before {
-            content: '';
+        .gradient-border::before {
+            content: "";
             position: absolute;
+            inset: 0;
+            padding: 1px;
+            border-radius: inherit;
+            background: linear-gradient(90deg, hsl(217 91% 60%), #60a5fa, #22d3ee);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            -webkit-mask-composite: xor;
+            pointer-events: none;
+        }
+
+        .text-gradient {
+            background: linear-gradient(90deg, hsl(217 91% 60%), hsl(217 100% 72%), hsl(195 100% 75%), hsl(217 91% 60%));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: shimmer 4s linear infinite;
+        }
+
+        .grid-bg {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(hsl(220 17% 17% / 0.35) 1px, transparent 1px),
+                linear-gradient(90deg, hsl(220 17% 17% / 0.35) 1px, transparent 1px);
+            background-size: 44px 44px;
+            mask-image: radial-gradient(ellipse at 50% 30%, #000 30%, transparent 75%);
+            -webkit-mask-image: radial-gradient(ellipse at 50% 30%, #000 30%, transparent 75%);
+        }
+
+        .glow {
+            position: absolute;
+            left: 50%;
             top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), hsl(200, 100%, 80%));
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .race-card:not(.disabled):hover::before {
-            opacity: 1;
-        }
-
-        .race-card.disabled::before {
-            background: var(--muted);
-            opacity: 0.3;
-        }
-
-        .race-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .race-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--foreground);
-        }
-
-        .race-description {
-            font-size: 0.9rem;
-            color: var(--muted-foreground);
-            margin-bottom: 1rem;
-            line-height: 1.5;
-        }
-
-        .race-type {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            background: var(--muted);
+            width: 900px;
+            max-width: 160vw;
+            height: 520px;
+            transform: translateX(-50%);
             border-radius: 9999px;
-            font-size: 0.75rem;
-            color: var(--muted-foreground);
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            opacity: 0.3;
+            filter: blur(64px);
+            background: radial-gradient(closest-side, hsl(217 91% 60% / 0.55), transparent);
+            pointer-events: none;
         }
 
-        .race-link {
+        /* ---------- Hero ---------- */
+
+        .hero {
+            /* No overflow clipping: the glow fades into the page instead of ending
+               in a hard line (body's overflow-x: hidden stops sideways scroll). */
+            position: relative;
+            padding: 6rem 0 4rem;
+            text-align: center;
+        }
+
+        @media (min-width: 768px) {
+            .hero { padding: 8rem 0 5rem; }
+        }
+
+        .hero-inner {
+            animation: fade-up 0.8s var(--ease) both;
+        }
+
+        .pill {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            border: 1px solid hsl(217 91% 60% / 0.3);
+            background: hsl(217 91% 60% / 0.1);
             color: var(--primary);
-            text-decoration: none;
+            font-size: 0.75rem;
             font-weight: 500;
-            font-size: 0.9rem;
-            transition: all 0.2s ease;
         }
 
-        .race-link:hover {
-            gap: 0.75rem;
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 9999px;
+            background: currentColor;
+            flex-shrink: 0;
         }
 
-        .race-link::after {
-            content: '→';
-            font-size: 1.2rem;
+        .dot.pulse {
+            animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
 
-        .coming-soon {
-            display: inline-block;
+        h1 {
+            font-size: clamp(2.5rem, 9vw, 4.5rem);
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            line-height: 1.05;
+        }
+
+        .lede {
+            max-width: 36rem;
+            margin: 1.5rem auto 0;
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
             color: var(--muted-foreground);
-            font-style: italic;
-            font-size: 0.9rem;
+            text-wrap: balance;
         }
 
-        .race-actions {
+        /* ---------- Sections ---------- */
+
+        section {
+            padding-bottom: 4rem;
+        }
+
+        .section-head {
+            margin-bottom: 1.5rem;
+        }
+
+        .kicker {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--primary);
+        }
+
+        .section-title {
+            margin-top: 0.5rem;
+            font-size: clamp(1.75rem, 5vw, 2.25rem);
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            line-height: 1.2;
+        }
+
+        /* ---------- Featured (upcoming) card ---------- */
+
+        .feature {
+            border-radius: 1rem;
+            padding: 1.5rem;
+            overflow: hidden;
+        }
+
+        @media (min-width: 640px) {
+            .feature { padding: 2rem; }
+        }
+
+        .feature-top {
             display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
+            align-items: flex-start;
+            gap: 1rem;
         }
 
-        .event-link {
+        .icon-tile {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 3rem;
+            height: 3rem;
+            flex-shrink: 0;
+            border-radius: var(--radius);
+            border: 1px solid hsl(217 91% 60% / 0.3);
+            background: hsl(217 91% 60% / 0.1);
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .race-title {
+            font-size: clamp(1.25rem, 4vw, 1.5rem);
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            line-height: 1.25;
+        }
+
+        .race-type {
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+        }
+
+        .race-description {
+            margin-top: 1.25rem;
+            color: hsl(210 40% 98% / 0.9);
+        }
+
+        .meta {
+            display: grid;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .meta { grid-template-columns: 1fr 1fr; }
+        }
+
+        .tile {
+            min-width: 0;
+            border-radius: 1rem;
+            border: 1px solid hsl(220 17% 17% / 0.5);
+            background: var(--card);
+            padding: 1rem;
+        }
+
+        .tile-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted-foreground);
+        }
+
+        .tile-value {
+            margin-top: 0.25rem;
+            font-family: var(--font-mono);
+            font-size: 1.125rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .countdown .tile-value {
+            color: var(--primary);
+        }
+
+        .countdown.open .tile-value {
+            color: rgb(134, 239, 172);
+        }
+
+        .countdown.live .tile-value {
+            color: rgb(134, 239, 172);
+        }
+
+        .countdown.finished .tile-value {
+            color: rgb(147, 197, 253);
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            color: var(--foreground);
-            background: var(--muted);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 0.9375rem;
             text-decoration: none;
-            font-weight: 500;
-            font-size: 0.85rem;
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            transition: all 0.2s ease;
+            transition: filter 0.2s, border-color 0.2s, background 0.2s;
+        }
+
+        .btn .icon {
+            transition: transform 0.2s;
+        }
+
+        .btn:hover .icon {
+            transform: translateX(2px);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--primary-foreground);
+            box-shadow: 0 20px 25px -5px hsl(217 91% 60% / 0.3);
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn-outline {
             border: 1px solid var(--border);
-            cursor: pointer;
+            background: hsl(223 47% 11% / 0.6);
+            color: var(--foreground);
         }
 
-        .event-link:hover {
-            background: var(--border);
-            border-color: var(--muted-foreground);
-            transform: translateY(-1px);
+        .btn-outline:hover {
+            border-color: hsl(217 91% 60% / 0.4);
+            background: var(--card);
         }
 
-        .race-date {
+        @media (max-width: 639px) {
+            .btn { width: 100%; }
+        }
+
+        /* ---------- Past events timeline ---------- */
+
+        .timeline {
+            position: relative;
+            list-style: none;
+            border-left: 1px solid var(--border);
+            padding-left: 1.5rem;
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .timeline li {
+            position: relative;
+        }
+
+        .timeline li::before {
+            content: "";
+            position: absolute;
+            left: calc(-1.5rem - 8px);
+            top: 50%;
+            width: 15px;
+            height: 15px;
+            margin-top: -7.5px;
+            border-radius: 9999px;
+            border: 2px solid var(--primary);
+            background: var(--background);
+        }
+
+        .past {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-            color: var(--muted-foreground);
-            margin-bottom: 1rem;
-            padding: 0.5rem 0.75rem;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 0.5rem;
-            border-left: 3px solid var(--primary);
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border-radius: 1rem;
+            border: 1px solid hsl(220 17% 17% / 0.5);
+            background: var(--card);
+            transition: border-color 0.2s;
         }
 
-        .race-card.disabled .race-date {
-            border-left-color: var(--muted);
+        .past:hover {
+            border-color: hsl(217 91% 60% / 0.3);
         }
 
-        .race-date-icon {
+        .past .icon-tile {
+            width: 2.5rem;
+            height: 2.5rem;
+            font-size: 1.125rem;
+        }
+
+        .past-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .past-title {
             font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.35;
         }
 
-        .countdown {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.8rem;
-            color: var(--primary);
-            margin-top: 0.5rem;
-            padding: 0.4rem 0.75rem;
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: 0.375rem;
-            font-weight: 500;
-        }
-
-        .countdown.live {
-            color: rgb(34, 197, 94);
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-
-        .countdown.finished {
-            color: rgb(168, 85, 247);
-            background: rgba(168, 85, 247, 0.1);
-            border: 1px solid rgba(168, 85, 247, 0.3);
-        }
-
-        .race-card.disabled .countdown {
+        .past-date {
+            margin-top: 0.125rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
             color: var(--muted-foreground);
-            background: rgba(0, 0, 0, 0.2);
         }
 
-        .countdown-icon {
-            font-size: 0.9rem;
+        /* Status chips: same recipe as the tracker and race-tracker-website
+           (rounded-full, 30% border, 10% fill, 400-weight text). */
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            flex-shrink: 0;
+            padding: 0.125rem 0.625rem;
+            border-radius: 9999px;
+            border: 1px solid var(--border);
+            background: hsl(223 47% 11% / 0.6);
+            color: var(--muted-foreground);
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1.5;
+            white-space: nowrap;
         }
+
+        /* Event states borrow the tracker's racer status colours (STATUS_TILE in
+           race-tracker-website/src/lib/race.ts): 600/30 fill, 400/60 border, 300 text.
+           Upcoming = DNS grey, tracker open = Pending yellow,
+           live = On Course green, past = Finished blue. */
+        .st-dns {
+            --st-bg: rgba(55, 65, 81, 0.3);
+            --st-bg-hover: rgba(55, 65, 81, 0.45);
+            --st-border: rgba(107, 114, 128, 0.3);
+            --st-text: rgb(156, 163, 175);
+            --st-shadow: rgba(0, 0, 0, 0.2);
+        }
+
+        .st-pending {
+            --st-bg: rgba(202, 138, 4, 0.3);
+            --st-bg-hover: rgba(202, 138, 4, 0.45);
+            --st-border: rgba(250, 204, 21, 0.6);
+            --st-text: rgb(253, 224, 71);
+            --st-shadow: rgba(234, 179, 8, 0.4);
+        }
+
+        .st-course {
+            --st-bg: rgba(22, 163, 74, 0.3);
+            --st-bg-hover: rgba(22, 163, 74, 0.45);
+            --st-border: rgba(74, 222, 128, 0.6);
+            --st-text: rgb(134, 239, 172);
+            --st-shadow: rgba(34, 197, 94, 0.4);
+        }
+
+        .st-finished {
+            --st-bg: rgba(37, 99, 235, 0.3);
+            --st-bg-hover: rgba(37, 99, 235, 0.45);
+            --st-border: rgba(96, 165, 250, 0.6);
+            --st-text: rgb(147, 197, 253);
+            --st-shadow: rgba(59, 130, 246, 0.4);
+        }
+
+        .chip[class*="st-"],
+        .pill[class*="st-"],
+        .btn-status {
+            border-color: var(--st-border);
+            background: var(--st-bg);
+            color: var(--st-text);
+        }
+
+        .chip[class*="st-"] {
+            box-shadow: 0 10px 15px -3px var(--st-shadow);
+        }
+
+        a.chip[class*="st-"]:hover,
+        a.pill[class*="st-"]:hover,
+        .btn-status:hover {
+            background: var(--st-bg-hover);
+        }
+
+        /* Same gentle pulse as an On Course bib tile. */
+        .st-course.pulse-subtle {
+            animation: pulse-subtle 3s ease-in-out infinite;
+        }
+
+        .feature .chip {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Live event: green border and glow, like the tracker's On Course state. */
+        .feature.is-live {
+            box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25), 0 0 42px rgba(34, 197, 94, 0.15);
+        }
+
+        .feature.is-live::before {
+            background: linear-gradient(90deg, #22c55e, #4ade80, #34d399);
+        }
+
+        /* When the tracker is up the whole card opens it: the main button's ::after
+           stretches over the card, and secondary links sit above it. */
+        .feature.is-clickable {
+            /* Keep the scroll-reveal fade while making hover snappy. */
+            transition: opacity 0.7s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s;
+        }
+
+        .feature.is-clickable:hover {
+            transform: translateY(-2px);
+        }
+
+        .stretched::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 1rem;
+            z-index: 1;
+        }
+
+        .btn-status {
+            border: 1px solid var(--st-border);
+            box-shadow: 0 20px 25px -5px var(--st-shadow);
+        }
+
+        /* Tracker not open yet: Pending yellow, not clickable. */
+        .btn-waiting {
+            cursor: default;
+        }
+
+        .btn-waiting:hover {
+            background: var(--st-bg);
+        }
+
+        /* Blinking status light: a glowing dot with a ping ring, in the status colour. */
+        .status-dot {
+            position: relative;
+            width: 8px;
+            height: 8px;
+            flex-shrink: 0;
+            border-radius: 9999px;
+            background: currentColor;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        .status-dot::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: currentColor;
+            animation: ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+
+        .st-pending .status-dot {
+            animation: blink 1.6s ease-in-out infinite;
+        }
+
+        .st-pending .status-dot::after {
+            animation-duration: 2.4s;
+        }
+
+        .text-link {
+            position: relative;
+            z-index: 2;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.5rem 0.25rem;
+            color: var(--muted-foreground);
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .text-link:hover {
+            color: var(--foreground);
+        }
+
+        .actions {
+            align-items: center;
+        }
+
+        @media (max-width: 639px) {
+            .text-link { width: 100%; justify-content: center; }
+        }
+
+        .tracker-note {
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+        }
+
+        a.pill {
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        a.pill:hover {
+            background: hsl(217 91% 60% / 0.15);
+        }
+
+
+        .stack {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .empty {
+            padding: 2rem 1.5rem;
+            border-radius: 1rem;
+            border: 1px dashed var(--border);
+            color: var(--muted-foreground);
+            text-align: center;
+        }
+
+        a.past {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* ---------- Footer ---------- */
 
         footer {
-            text-align: center;
-            margin-top: 4rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--border);
+            border-top: 1px solid hsl(220 17% 17% / 0.6);
+            padding: 2.5rem 0;
             color: var(--muted-foreground);
             font-size: 0.875rem;
         }
 
-        .live-badge {
-            display: inline-flex;
+        .footer-inner {
+            display: flex;
+            flex-direction: column;
             align-items: center;
+            justify-content: space-between;
             gap: 0.5rem;
-            padding: 0.25rem 0.75rem;
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            color: rgb(34, 197, 94);
-            margin-left: 0.5rem;
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            text-align: center;
         }
 
-        .live-dot {
-            width: 6px;
-            height: 6px;
-            background: rgb(34, 197, 94);
-            border-radius: 50%;
-            animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        @media (min-width: 768px) {
+            .footer-inner { flex-direction: row; }
         }
 
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.7;
-            }
+        .brand {
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: var(--foreground);
+        }
+
+        /* ---------- Motion ---------- */
+
+        /* Scroll reveal: elements start hidden and animate once in view. */
+        .reveal {
+            opacity: 0;
+            transform: translateY(18px);
+            transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+        }
+
+        .reveal.is-visible {
+            opacity: 1;
+            transform: none;
+        }
+
+        .no-js .reveal {
+            opacity: 1;
+            transform: none;
+        }
+
+        @keyframes shimmer {
+            from { background-position: 0% 50%; }
+            to { background-position: 200% 50%; }
+        }
+
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        @keyframes ping {
+            75%, 100% { transform: scale(2.4); opacity: 0; }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.82; }
         }
 
         @keyframes pulse-dot {
-            0%, 100% {
-                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-            }
-            50% {
-                box-shadow: 0 0 0 4px rgba(34, 197, 94, 0);
-            }
+            0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            50% { box-shadow: 0 0 0 4px rgba(74, 222, 128, 0); }
         }
 
-        @media (max-width: 768px) {
-            body {
-                padding: 1.5rem 1rem;
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: hsl(220 17% 22%); border-radius: 8px; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+                scroll-behavior: auto !important;
             }
-
-            header {
-                margin-bottom: 2.5rem;
-            }
-
-            .race-card {
-                padding: 1.5rem;
-            }
-
-            .race-card.compact {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-
-            .race-card.compact .card-left {
-                width: 100%;
-            }
-
-            .race-card.compact .card-right {
-                width: 100%;
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .race-card.compact .race-actions {
-                width: 100%;
-            }
-
-            .race-card.compact .event-link,
-            .race-card.compact .race-link {
-                flex: 1;
-                justify-content: center;
-            }
-        }
-
-        /* Prevent text selection on cards */
-        .race-card {
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        a {
-            user-select: auto;
-            -webkit-user-select: auto;
+            .reveal { opacity: 1; transform: none; }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>WMSC Live</h1>
-            <p class="subtitle">White Mountain Ski Company</p>
-            <p class="tagline">Live Event Tracking & Results</p>
-        </header>
+<body class="no-js">
+    <script>document.body.classList.remove('no-js');</script>
 
-        <!-- Past Events -->
-        <div class="past-events">
-            <h2 class="section-header">Past Events</h2>
-            <div class="race-grid">
-                <div class="race-card glass compact">
-                    <div class="card-left">
-                        <span class="race-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mountain preview-icon"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></span>
-                        <h2 class="race-title">Long Trail Unsupported FKT Attempt</h2>
-                    </div>
-                    <div class="card-right">
-                        <div class="race-date" data-event-date="2026-08-15T08:30:00-05:00" data-event-end-date="2026-08-18T17:30:00-05:00">
-                            <span class="race-date-icon">📅</span>
-                            <span>Aug 15-18, 2026</span>
-                        </div>
-                        <div class="countdown finished">
-                            <span class="countdown-icon">✓</span>
-                            <span class="countdown-text">Finished</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="race-card glass compact">
-                    <div class="card-left">
-                        <span class="race-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mountain preview-icon"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/></svg></span>
-                        <h2 class="race-title">Whites 100 2026</h2>
-                    </div>
-                    <div class="card-right">
-                        <div class="race-date" data-event-date="2026-09-11T09:00:00-05:00" data-event-end-date="2026-09-13T18:00:00-05:00">
-                            <span class="race-date-icon">📅</span>
-                            <span>Sept 11-13, 2026</span>
-                        </div>
-                        <div class="countdown finished">
-                            <span class="countdown-icon">✓</span>
-                            <span class="countdown-text">Finished</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="race-card glass compact">
-                    <div class="card-left">
-                        <span class="race-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sport-shoe preview-icon"><path d="m15 10.42 4.8-5.07"/><path d="M19 18h3"/><path d="M9.5 22 21.414 9.415A2 2 0 0 0 21.2 6.4l-5.61-4.208A1 1 0 0 0 14 3v2a2 2 0 0 1-1.394 1.906L8.677 8.053A1 1 0 0 0 8 9c-.155 6.393-2.082 9-4 9a2 2 0 0 0 0 4h14"/></svg></span>
-                        <h2 class="race-title">Bubba's Backyard Ultra 2026</h2>
-                    </div>
-                    <div class="card-right">
-                        <div class="race-date" data-event-date="2026-10-03T10:00:00-05:00" data-event-end-date="2026-10-06T18:00:00-05:00">
-                            <span class="race-date-icon">📅</span>
-                            <span>Oct 03-06, 2026</span>
-                        </div>
-                        <div class="countdown finished">
-                            <span class="countdown-icon">✓</span>
-                            <span class="countdown-text">Finished</span>
-                        </div>
-                    </div>
-                </div>
+    <header class="hero">
+        <div class="grid-bg" aria-hidden="true"></div>
+        <div class="glow" aria-hidden="true"></div>
+        <div class="container hero-inner">
+            <div id="hero-pill">
+                <span class="pill"><span class="dot"></span>White Mountain Ski Company</span>
             </div>
+            <h1>WMSC <span class="text-gradient">Live</span></h1>
+            <p class="lede">Live event tracking and results for White Mountain Ski Co. races.</p>
         </div>
+    </header>
 
-        <h2 class="section-header">Upcoming Events</h2>
-        <div class="race-grid">
-          <div class="race-card glass disabled" >
-            <span class="race-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mountain-snow preview-icon"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/><path d="M4.14 15.08c2.62-1.57 5.24-1.43 7.86.42 2.74 1.94 5.49 2 8.23.19"/></svg></span>
-            <h2 class="race-title">
-              Last Skier Standing 2027
-            </h2>
-            <span class="race-type">Last Athlete Standing style ski event at Black Mountain of Maine!</span>
-            <div class="race-date" data-event-date="2027-02-05T10:00:00-05:00" data-event-end-date="2027-02-08T18:00:00-05:00">
-                    <span class="race-date-icon">📅</span>
-                    <span>February 05-08, 2027 • 10:00 AM EST</span>
-                </div>
-                <div class="countdown">
-                    <span class="countdown-icon"></span>
-                    <span class="countdown-text">Calculating...</span>
-                </div>
-                <p class="race-description">
-                    Skin up, ski down - do it again every hour on the hour until there is only one person left.
-                </p>
-                <a href="" class="event-link" onclick="window.open('https://whitemountainski.co/pages/last-skier-standing', '_blank')">
-                    Event Info
-                </a>
+
+    <!-- Events are rendered from events.json. To add or remove an event, edit that file. -->
+    <main class="container">
+        <section>
+            <div class="section-head reveal">
+                <p class="kicker">Up next</p>
+                <h2 class="section-title">Upcoming events</h2>
             </div>
-        </div>
+            <div id="upcoming" class="stack"></div>
+        </section>
 
-        <footer>
-            <p>&copy; 2026 White Mountain Ski Co. All rights reserved.</p>
-            <p style="margin-top: 0.5rem; opacity: 0.7;">
-                Real-time tracking for WMSC events
-            </p>
-        </footer>
-    </div>
+        <section id="past-section" hidden>
+            <div class="section-head reveal">
+                <p class="kicker">Results</p>
+                <h2 class="section-title">Past events</h2>
+            </div>
+            <ol id="past" class="timeline"></ol>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-inner">
+            <span class="brand">WMSC Live</span>
+            <p>Real-time tracking for WMSC events</p>
+            <p>&copy; <span id="year">2026</span> White Mountain Ski Co.</p>
+        </div>
+    </footer>
 
     <script>
-        function updateCountdowns() {
+        const TIME_ZONE = 'America/New_York';
+        const DAY = 864e5;
+        // The tracker site usually goes up about 10 days before the race; set "trackerOpens" in events.json to override.
+        const TRACKER_LEAD_DAYS = 10;
+        const DEFAULT_TRACKER_NOTE = 'Follow along live: who is still out there, lap times and results as they happen.';
+
+        const svg = paths => `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+
+        // Lucide icons. Use these names in events.json's "icon" field.
+        const ICONS = {
+            'mountain': svg('<path d="m8 3 4 8 5-5 5 15H2L8 3z"/>'),
+            'mountain-snow': svg('<path d="m8 3 4 8 5-5 5 15H2L8 3z"/><path d="M4.14 15.08c2.62-1.57 5.24-1.43 7.86.42 2.74 1.94 5.49 2 8.23.19"/>'),
+            'shoe': svg('<path d="m15 10.42 4.8-5.07"/><path d="M19 18h3"/><path d="M9.5 22 21.414 9.415A2 2 0 0 0 21.2 6.4l-5.61-4.208A1 1 0 0 0 14 3v2a2 2 0 0 1-1.394 1.906L8.677 8.053A1 1 0 0 0 8 9c-.155 6.393-2.082 9-4 9a2 2 0 0 0 0 4h14"/>'),
+            'timer': svg('<line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/>'),
+            'flag': svg('<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>'),
+        };
+        const ARROW = svg('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>');
+        const EXTERNAL = svg('<path d="M7 7h10v10"/><path d="M7 17 17 7"/>');
+
+        const esc = str => String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        const part = (date, opts) => new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, ...opts }).format(date);
+        const shortDate = d => part(d, { month: 'short', day: 'numeric' });
+
+        // "Feb 5–8, 2027", "Sep 30 – Oct 2, 2026" or "Dec 31, 2026 – Jan 2, 2027".
+        function dateRange(start, end) {
+            const y = d => part(d, { year: 'numeric' });
+            if (!end || shortDate(start) === shortDate(end) && y(start) === y(end)) return `${shortDate(start)}, ${y(start)}`;
+            if (y(start) !== y(end)) return `${shortDate(start)}, ${y(start)} – ${shortDate(end)}, ${y(end)}`;
+            if (part(start, { month: 'short' }) === part(end, { month: 'short' })) {
+                return `${shortDate(start)}–${part(end, { day: 'numeric' })}, ${y(start)}`;
+            }
+            return `${shortDate(start)} – ${shortDate(end)}, ${y(start)}`;
+        }
+
+        const startTime = d => part(d, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+
+        // announced → tracker open → live → finished
+        function phase(ev, now) {
+            if (ev.end && now > ev.end) return 'finished';
+            if (now >= ev.start) return 'live';
+            if (now >= ev.trackerOpens) return 'open';
+            return 'announced';
+        }
+
+        function countdownText(ev, now) {
+            const p = phase(ev, now);
+            if (p === 'finished') return 'Finished';
+            if (p === 'live') return 'In progress';
+            const diff = ev.start - now;
+            const days = Math.floor(diff / DAY);
+            const hours = Math.floor((diff % DAY) / 36e5);
+            const minutes = Math.floor((diff % 36e5) / 6e4);
+            if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+        }
+
+        function statusChip(p) {
+            return {
+                announced: '<span class="chip st-dns">Upcoming</span>',
+                open: '<span class="chip st-course"><span class="status-dot"></span>Tracker open</span>',
+                live: '<span class="chip st-course pulse-subtle"><span class="status-dot"></span>Live now</span>',
+                finished: '<span class="chip st-finished">Finished</span>',
+            }[p];
+        }
+
+        function trackerAction(ev, p) {
+            const url = esc(ev.trackerUrl);
+            if (p === 'live' && ev.trackerUrl) {
+                return `<a class="btn btn-status st-course pulse-subtle stretched" href="${url}" target="_blank" rel="noopener"><span class="status-dot"></span>Watch live ${ARROW}</a>`;
+            }
+            if (p === 'open' && ev.trackerUrl) {
+                return `<a class="btn btn-status st-course stretched" href="${url}" target="_blank" rel="noopener"><span class="status-dot"></span>Open live tracker ${ARROW}</a>`;
+            }
+            if (p === 'announced') {
+                return `<span class="btn btn-status btn-waiting st-pending"><span class="status-dot"></span>Live tracker opens ${shortDate(ev.trackerOpens)}</span>`;
+            }
+            // Tracker should be up but events.json has no link yet.
+            return `<span class="btn btn-status btn-waiting st-pending"><span class="status-dot"></span>Live tracker link coming soon</span>`;
+        }
+
+        function featureCard(ev, now) {
+            const p = phase(ev, now);
+            const clickable = (p === 'open' || p === 'live') && ev.trackerUrl;
+            const classes = ['feature', 'glass', 'gradient-border', 'reveal', p === 'live' && 'is-live', clickable && 'is-clickable'].filter(Boolean).join(' ');
+            const info = ev.infoUrl
+                ? `<a class="text-link" href="${esc(ev.infoUrl)}" target="_blank" rel="noopener">Event details ${EXTERNAL}</a>`
+                : '';
+            return `
+                <article class="${classes}" data-event="${ev.index}">
+                    <div class="feature-top">
+                        <span class="icon-tile">${ICONS[ev.icon] || ICONS.flag}</span>
+                        <div>
+                            ${statusChip(p === 'open' && !ev.trackerUrl ? 'announced' : p)}
+                            <h3 class="race-title">${esc(ev.name)}</h3>
+                            ${ev.subtitle ? `<p class="race-type">${esc(ev.subtitle)}</p>` : ''}
+                        </div>
+                    </div>
+                    ${ev.description ? `<p class="race-description">${esc(ev.description)}</p>` : ''}
+                    <div class="meta">
+                        <div class="tile">
+                            <p class="tile-label">Date</p>
+                            <p class="tile-value">${esc(ev.dateLabel || `${dateRange(ev.start, ev.end)} · ${startTime(ev.start)}`)}</p>
+                        </div>
+                        <div class="tile countdown ${p}">
+                            <p class="tile-label">${p === 'live' ? 'Status' : 'Starts in'}</p>
+                            <p class="tile-value countdown-text">${countdownText(ev, now)}</p>
+                        </div>
+                    </div>
+                    <div class="actions">${trackerAction(ev, p)}${info}</div>
+                    <p class="tracker-note">${esc(ev.trackerNote || DEFAULT_TRACKER_NOTE)}</p>
+                </article>`;
+        }
+
+        function pastItem(ev) {
+            const chip = ev.resultsUrl
+                ? `<a class="chip st-finished" href="${esc(ev.resultsUrl)}" target="_blank" rel="noopener">Results ${ARROW}</a>`
+                : '<span class="chip st-finished">Finished</span>';
+            return `
+                <li class="reveal">
+                    <div class="past">
+                        <span class="icon-tile">${ICONS[ev.icon] || ICONS.flag}</span>
+                        <div class="past-body">
+                            <h3 class="past-title">${esc(ev.name)}</h3>
+                            <p class="past-date">${esc(ev.dateLabel || dateRange(ev.start, ev.end))}</p>
+                        </div>
+                        ${chip}
+                    </div>
+                </li>`;
+        }
+
+        // The hero pill points straight at a running (or open) tracker.
+        function heroPill(current, now) {
+            const live = current.find(ev => phase(ev, now) === 'live' && ev.trackerUrl);
+            if (live) {
+                return `<a class="pill st-course" href="${esc(live.trackerUrl)}" target="_blank" rel="noopener"><span class="status-dot"></span>Live now: ${esc(live.name)} ${ARROW}</a>`;
+            }
+            const open = current.find(ev => phase(ev, now) === 'open' && ev.trackerUrl);
+            if (open) {
+                return `<a class="pill st-course" href="${esc(open.trackerUrl)}" target="_blank" rel="noopener"><span class="status-dot"></span>Tracker open: ${esc(open.name)} ${ARROW}</a>`;
+            }
+            return '<span class="pill"><span class="dot"></span>White Mountain Ski Company</span>';
+        }
+
+        let events = [];
+        let lastLayout = '';
+
+        function render() {
             const now = new Date();
-            const countdownElements = document.querySelectorAll('.countdown');
+            const layout = events.map(ev => phase(ev, now)).join();
 
-            countdownElements.forEach(countdown => {
-                const dateElement = countdown.previousElementSibling;
-                const eventDateStr = dateElement.getAttribute('data-event-date');
-                const eventEndDateStr = dateElement.getAttribute('data-event-end-date');
+            // Only rebuild when an event changes phase; otherwise just tick the countdowns.
+            if (layout === lastLayout) {
+                document.querySelectorAll('[data-event]').forEach(card => {
+                    card.querySelector('.countdown-text').textContent = countdownText(events[card.dataset.event], now);
+                });
+                return;
+            }
+            lastLayout = layout;
 
-                if (!eventDateStr) return;
+            const current = events.filter(ev => phase(ev, now) !== 'finished').sort((a, b) => a.start - b.start);
+            const past = events.filter(ev => phase(ev, now) === 'finished').sort((a, b) => b.start - a.start);
 
-                const eventDate = new Date(eventDateStr);
-                const diff = eventDate - now;
+            document.getElementById('hero-pill').innerHTML = heroPill(current, now);
+            document.getElementById('upcoming').innerHTML = current.length
+                ? current.map(ev => featureCard(ev, now)).join('')
+                : '<p class="empty reveal">No upcoming events announced yet. Check back soon.</p>';
+            document.getElementById('past').innerHTML = past.map(pastItem).join('');
+            document.getElementById('past-section').hidden = past.length === 0;
 
-                const countdownText = countdown.querySelector('.countdown-text');
+            observeReveals();
+        }
 
-                // Check if event has ended
-                if (eventEndDateStr) {
-                    const eventEndDate = new Date(eventEndDateStr);
-                    if (now > eventEndDate) {
-                        countdown.classList.remove('live');
-                        countdown.classList.add('finished');
-                        countdownText.textContent = 'Event finished';
-                        return;
+        // Scroll reveal, matching race-tracker-website's Reveal component
+        const observer = 'IntersectionObserver' in window
+            ? new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
                     }
-                }
+                });
+            }, { threshold: 0.15 })
+            : null;
 
-                // Check if event is in progress
-                if (diff < 0) {
-                    countdown.classList.add('live');
-                    countdown.classList.remove('finished');
-                    countdownText.textContent = 'Event in progress';
-                    return;
-                } else {
-                    countdown.classList.remove('live', 'finished');
-                }
-
-                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-                let text = 'Starts in: ';
-                if (days > 0) {
-                    text += `${days}d ${hours}h ${minutes}m`;
-                } else if (hours > 0) {
-                    text += `${hours}h ${minutes}m`;
-                } else {
-                    text += `${minutes}m`;
-                }
-
-                countdownText.textContent = text;
+        function observeReveals() {
+            document.querySelectorAll('.reveal:not(.is-visible)').forEach((el, i) => {
+                if (!observer) return el.classList.add('is-visible');
+                el.style.transitionDelay = `${Math.min(i, 4) * 60}ms`;
+                observer.observe(el);
             });
         }
 
-        // Update immediately on load
-        updateCountdowns();
+        document.getElementById('year').textContent = new Date().getFullYear();
+        observeReveals();
 
-        // Update every minute
-        setInterval(updateCountdowns, 60000);
+        fetch('events.json', { cache: 'no-cache' })
+            .then(res => {
+                if (!res.ok) throw new Error(`events.json: HTTP ${res.status}`);
+                return res.json();
+            })
+            .then(data => {
+                events = (data.events || []).map((ev, index) => {
+                    const start = new Date(ev.start);
+                    return {
+                        ...ev,
+                        index,
+                        start,
+                        end: ev.end ? new Date(ev.end) : null,
+                        trackerOpens: ev.trackerOpens ? new Date(ev.trackerOpens) : new Date(start - TRACKER_LEAD_DAYS * DAY),
+                    };
+                });
+                render();
+                setInterval(render, 60000);
+            })
+            .catch(err => {
+                console.error(err);
+                // Browsers block fetch() on pages opened straight from disk.
+                document.getElementById('upcoming').innerHTML = location.protocol === 'file:'
+                    ? '<p class="empty is-visible">Opened from a file, so events.json can\'t load. Preview with <code>python3 -m http.server -d docs</code> and open http://localhost:8000.</p>'
+                    : '<p class="empty is-visible">Events could not be loaded. Please refresh the page.</p>';
+            });
     </script>
 </body>
 </html>

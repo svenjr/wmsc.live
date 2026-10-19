@@ -1,0 +1,32 @@
+{
+  "events": [
+    {
+      "name": "Last Skier Standing 2027",
+      "subtitle": "Last Athlete Standing style ski event at Black Mountain of Maine",
+      "description": "Skin up, ski down, and do it again every hour on the hour until there is only one person left.",
+      "icon": "mountain-snow",
+      "start": "2027-02-05T10:00:00-05:00",
+      "end": "2027-02-08T18:00:00-05:00",
+      "trackerUrl": "",
+      "infoUrl": "https://whitemountainski.co/pages/last-skier-standing"
+    },
+    {
+      "name": "Bubba's Backyard Ultra 2026",
+      "icon": "shoe",
+      "start": "2026-10-03T10:00:00-04:00",
+      "end": "2026-10-06T18:00:00-04:00"
+    },
+    {
+      "name": "Whites 100 2026",
+      "icon": "mountain",
+      "start": "2026-09-11T09:00:00-04:00",
+      "end": "2026-09-13T18:00:00-04:00"
+    },
+    {
+      "name": "Long Trail Unsupported FKT Attempt",
+      "icon": "mountain",
+      "start": "2026-08-15T08:30:00-04:00",
+      "end": "2026-08-18T17:30:00-04:00"
+    }
+  ]
+}
